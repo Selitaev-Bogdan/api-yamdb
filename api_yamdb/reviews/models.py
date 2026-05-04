@@ -37,22 +37,25 @@ class User(AbstractUser):
     class Meta:
         ordering = ['username']
 
+
 class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
-    
+
     class Meta:
         verbose_name_plural = 'Categories'
-    
+
     def __str__(self):
         return self.name
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(unique=True)
-    
+
     def __str__(self):
         return self.name
+
 
 class Title(models.Model):
     name = models.CharField(max_length=256)
@@ -65,9 +68,10 @@ class Title(models.Model):
     )
     genre = models.ManyToManyField(Genre, related_name='titles')
     description = models.TextField(blank=True)
-    
+
     def __str__(self):
         return self.name
+
 
 class Review(models.Model):
     title = models.ForeignKey(
@@ -85,12 +89,13 @@ class Review(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
     pub_date = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
         unique_together = ['title', 'author']
-    
+
     def __str__(self):
         return f'{self.author} - {self.title} - {self.score}'
+
 
 class Comment(models.Model):
     review = models.ForeignKey(
@@ -105,6 +110,6 @@ class Comment(models.Model):
     )
     text = models.TextField()
     pub_date = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f'{self.author} - {self.review}'

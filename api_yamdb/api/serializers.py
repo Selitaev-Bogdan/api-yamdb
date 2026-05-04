@@ -8,18 +8,27 @@ from reviews.models import Category, Comment, Genre, Review, Title, User
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role')
         read_only_fields = ('role',)
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('name', 'slug')
 
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ('name', 'slug')
+
 
 class TitleListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
@@ -28,11 +37,19 @@ class TitleListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description', 'category', 'genre')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'category',
+            'genre')
 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
         return round(rating, 1) if rating else None
+
 
 class TitleDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
@@ -41,11 +58,19 @@ class TitleDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Title
-        fields = ('id', 'name', 'year', 'rating', 'description', 'category', 'genre')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'category',
+            'genre')
 
     def get_rating(self, obj):
         rating = obj.reviews.aggregate(Avg('score'))['score__avg']
         return round(rating, 1) if rating else None
+
 
 class TitleCreateSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
@@ -83,6 +108,7 @@ class TitleCreateSerializer(serializers.ModelSerializer):
         instance.save()
         return instance
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username',
@@ -104,6 +130,7 @@ class ReviewSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Вы уже оставили отзыв')
         return data
 
+
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username',
@@ -113,6 +140,7 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'text', 'author', 'pub_date')
+
 
 class CustomUserCreateSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(
@@ -131,19 +159,26 @@ class CustomUserCreateSerializer(serializers.ModelSerializer):
         ]
     )
     password = serializers.CharField(
-        write_only=True, 
-        required=False, 
+        write_only=True,
+        required=False,
         allow_blank=True
     )
     role = serializers.ChoiceField(
-        choices=['user', 'moderator', 'admin'], 
-        required=False, 
+        choices=['user', 'moderator', 'admin'],
+        required=False,
         default='user'
     )
 
     class Meta:
         model = User
-        fields = ('email', 'username', 'password', 'role', 'first_name', 'last_name', 'bio')
+        fields = (
+            'email',
+            'username',
+            'password',
+            'role',
+            'first_name',
+            'last_name',
+            'bio')
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)

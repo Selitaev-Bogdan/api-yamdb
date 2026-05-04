@@ -25,6 +25,62 @@ from .serializers import (CategorySerializer, CommentSerializer,
 def generate_confirmation_code():
     return ''.join(random.choices(string.digits, k=6))
 
+
+def validate_username(username, errors):
+    """Проверка username на валидность."""
+    if not username:
+        errors['username'] = ['Обязательное поле.']
+    elif username.lower() == 'me':
+        errors['username'] = ['Использовать имя "me" в качестве username запрещено']
+    elif len(username) > 150:
+        errors['username'] = ['Длина username не должна превышать 150 символов']
+    elif not re.match(r'^[\w.@+-]+\Z', username):
+        errors['username'] = ['Недопустимые символы в username']
+    return errors
+
+
+def validate_email(email, errors):
+    """Проверка email на валидность."""
+    if not email:
+        errors['email'] = ['Обязательное поле.']
+    elif len(email) > 254:
+        errors['email'] = ['Длина email не должна превышать 254 символа']
+    elif '@' not in email or '.' not in email:
+        errors['email'] = ['Некорректный email']
+    return errors
+
+
+def create_or_get_user(username, email, errors):
+    """Создание или получение пользователя."""
+    if User.objects.filter(email=email).exists():
+        user = User.objects.get(email=email)
+        if user.username != username:
+            errors['email'] = ['Пользователь с таким email уже существует']
+            return None, errors
+    else:
+        if User.objects.filter(username=username).exists():
+            errors['username'] = ['Пользователь с таким username уже существует']
+            return None, errors
+        user = User.objects.create_user(username=username, email=email)
+    return user, errors
+
+
+def send_confirmation_email(email, confirmation_code, username):
+    """Отправка кода подтверждения."""
+    try:
+        send_mail(
+            'Код подтверждения YaMDb',
+            f'Ваш код подтверждения: {confirmation_code}',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
+            fail_silently=False,
+        )
+    except Exception:
+        print(f"\n{'=' * 50}")
+        print(f"Код подтверждения для {username}: {confirmation_code}")
+        print(f"{'=' * 50}\n")
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = CustomUserSerializer
@@ -46,7 +102,7 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes = [IsAdmin]
         return [permission() for permission in permission_classes]
 
-    @action(detail=False, methods=['get', 'patch', 'delete'], 
+    @action(detail=False, methods=['get', 'patch', 'delete'],
             permission_classes=[IsAuthenticated])
     def me(self, request):
         if request.method == 'GET':
@@ -57,8 +113,8 @@ class UserViewSet(viewsets.ModelViewSet):
             if 'role' in data:
                 del data['role']
             serializer = self.get_serializer(
-                request.user, 
-                data=data, 
+                request.user,
+                data=data,
                 partial=True
             )
             serializer.is_valid(raise_exception=True)
@@ -94,7 +150,12 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -111,6 +172,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
 
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
@@ -125,6 +187,7 @@ class GenreViewSet(viewsets.ModelViewSet):
             {'detail': 'Method GET not allowed.'},
             status=status.HTTP_405_METHOD_NOT_ALLOWED
         )
+
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
@@ -158,6 +221,7 @@ class TitleViewSet(viewsets.ModelViewSet):
             )
         return super().update(request, *args, **kwargs)
 
+
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
@@ -184,6 +248,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_405_METHOD_NOT_ALLOWED
             )
         return super().update(request, *args, **kwargs)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
@@ -213,85 +278,55 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
-            return Response({'detail': 'Method PUT not allowed.'}, 
-                          status=status.HTTP_405_METHOD_NOT_ALLOWED)
+            return Response(
+                {'detail': 'Method PUT not allowed.'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED
+            )
         return super().update(request, *args, **kwargs)
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
+    """Регистрация нового пользователя."""
     username = request.data.get('username')
     email = request.data.get('email')
-    
+
     errors = {}
-    
-    if not username:
-        errors['username'] = ['Обязательное поле.']
-    if not email:
-        errors['email'] = ['Обязательное поле.']
-    
-    if username:
-        if username.lower() == 'me':
-            errors['username'] = ['Использовать имя "me" в качестве username запрещено']
-        elif len(username) > 150:
-            errors['username'] = ['Длина username не должна превышать 150 символов']
-        elif not re.match(r'^[\w.@+-]+\Z', username):
-            errors['username'] = ['Недопустимые символы в username']
-    
-    if email:
-        if len(email) > 254:
-            errors['email'] = ['Длина email не должна превышать 254 символа']
-        elif '@' not in email or '.' not in email:
-            errors['email'] = ['Некорректный email']
-    
+    errors = validate_username(username, errors)
+    errors = validate_email(email, errors)
+
     if errors:
         return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    if User.objects.filter(email=email).exists():
-        user = User.objects.get(email=email)
-        if user.username != username:
-            errors['email'] = ['Пользователь с таким email уже существует']
-            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        if User.objects.filter(username=username).exists():
-            errors['username'] = ['Пользователь с таким username уже существует']
-            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
-        user = User.objects.create_user(username=username, email=email)
-    
+
+    user, errors = create_or_get_user(username, email, errors)
+    if errors:
+        return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+
     confirmation_code = generate_confirmation_code()
     user.confirmation_code = confirmation_code
     user.save()
-    
-    try:
-        send_mail(
-            'Код подтверждения YaMDb',
-            f'Ваш код подтверждения: {confirmation_code}',
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-        )
-    except Exception:
-        print(f"\n{'='*50}")
-        print(f"Код подтверждения для {username}: {confirmation_code}")
-        print(f"{'='*50}\n")
-    
+
+    send_confirmation_email(email, confirmation_code, username)
+
     return Response(
         {'email': email, 'username': username},
         status=status.HTTP_200_OK
     )
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_jwt_token(request):
     username = request.data.get('username')
     confirmation_code = request.data.get('confirmation_code')
-    
+
     if not username or not confirmation_code:
         return Response(
             {'error': 'Обязательные поля username и confirmation_code'},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     try:
         user = User.objects.get(username=username)
     except User.DoesNotExist:
@@ -299,7 +334,7 @@ def get_jwt_token(request):
             {'error': 'Пользователь не найден'},
             status=status.HTTP_404_NOT_FOUND
         )
-    
+
     if user.confirmation_code == confirmation_code:
         refresh = RefreshToken.for_user(user)
         return Response({
