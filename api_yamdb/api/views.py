@@ -34,9 +34,13 @@ def validate_username(username, errors):
         errors['username'] = [
             'Использовать имя "me" в качестве username запрещено']
     elif len(username) > 150:
-        errors['username'] = ['Длина username не должна превышать 150 символов']
+        errors['username'] = [
+            'Длина username не должна превышать 150 символов'
+        ]
     elif not re.match(r'^[\w.@+-]+\Z', username):
-        errors['username'] = ['Недопустимые символы в username']
+        errors['username'] = [
+            'Недопустимые символы в username'
+        ]
     return errors
 
 
