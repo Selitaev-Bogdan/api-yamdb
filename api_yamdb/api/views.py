@@ -31,7 +31,8 @@ def validate_username(username, errors):
     if not username:
         errors['username'] = ['Обязательное поле.']
     elif username.lower() == 'me':
-        errors['username'] = ['Использовать имя "me" в качестве username запрещено']
+        errors['username'] = [
+            'Использовать имя "me" в качестве username запрещено']
     elif len(username) > 150:
         errors['username'] = ['Длина username не должна превышать 150 символов']
     elif not re.match(r'^[\w.@+-]+\Z', username):
@@ -59,7 +60,8 @@ def create_or_get_user(username, email, errors):
             return None, errors
     else:
         if User.objects.filter(username=username).exists():
-            errors['username'] = ['Пользователь с таким username уже существует']
+            errors['username'] = [
+                'Пользователь с таким username уже существует']
             return None, errors
         user = User.objects.create_user(username=username, email=email)
     return user, errors
@@ -228,7 +230,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            self.permission_classes = [IsAuthenticated, IsAuthorOrModeratorOrAdmin]
+            self.permission_classes = [
+                IsAuthenticated, IsAuthorOrModeratorOrAdmin]
         else:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
