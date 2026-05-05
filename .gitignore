@@ -148,3 +148,7 @@ dmypy.json
 # папки со статикой и медиа
 media/
 
+token.txt
+sent_emails/
+*.log
+.env
