@@ -19,7 +19,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class CustomUserCreateSerializer(serializers.Serializer):
-    """Сериализатор для регистрации. Только необходимые поля."""
+    """Сериализатор для регистрации."""
 
     email = serializers.EmailField(required=True, max_length=254)
     username = serializers.CharField(
@@ -45,7 +45,7 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleListSerializer(serializers.ModelSerializer):
-    """Сериализатор для списка произведений (с аннотированным рейтингом)."""
+    """Сериализатор для списка произведений."""
 
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
@@ -80,6 +80,8 @@ class TitleCreateSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """Сериализатор для отзывов."""
+
     author = serializers.SlugRelatedField(
         slug_field="username", read_only=True
     )
@@ -102,6 +104,8 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    """Сериализатор для комментариев."""
+
     author = serializers.SlugRelatedField(
         slug_field="username", read_only=True
     )

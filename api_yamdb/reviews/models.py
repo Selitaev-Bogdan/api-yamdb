@@ -1,3 +1,5 @@
+import datetime as dt
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -31,9 +33,6 @@ class User(AbstractUser):
         default=Roles.USER,
     )
     bio = models.TextField("Биография", blank=True, null=True)
-    confirmation_code = models.CharField(
-        "Код подтверждения", max_length=10, blank=True
-    )
 
     class Meta:
         ordering = ("username",)
@@ -80,7 +79,15 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField("Название", max_length=MAX_LENGTH_NAME)
-    year = models.PositiveSmallIntegerField("Год выпуска")
+    year = models.PositiveSmallIntegerField(
+        "Год выпуска",
+        validators=[
+            MaxValueValidator(
+                dt.datetime.now().year,
+                message="Год выпуска не может быть больше текущего"
+            )
+        ]
+    )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -126,7 +133,11 @@ class Review(models.Model):
     pub_date = models.DateTimeField("Дата публикации", auto_now_add=True)
 
     class Meta:
-        unique_together = ("title", "author")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "author"], name="unique_review"
+            )
+        ]
         verbose_name = "Отзыв"
         verbose_name_plural = "Отзывы"
         ordering = ("-pub_date",)

@@ -1,7 +1,4 @@
-import random
-import string
-
-from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
@@ -11,6 +8,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+
 from reviews.models import Category, Genre, Review, Title, User
 
 from .filters import TitleFilter
@@ -19,10 +17,6 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           CustomUserCreateSerializer, CustomUserSerializer,
                           GenreSerializer, ReviewSerializer,
                           TitleCreateSerializer, TitleListSerializer)
-
-
-def generate_confirmation_code():
-    return "".join(random.choices(string.digits, k=6))
 
 
 @api_view(["POST"])
@@ -35,42 +29,40 @@ def signup(request):
     username = serializer.validated_data.get("username")
     email = serializer.validated_data.get("email")
 
-    # Оптимизация: получаем пользователя одним запросом
-    user = User.objects.filter(username=username, email=email).first()
+    user_by_username = User.objects.filter(username=username).first()
+    user_by_email = User.objects.filter(email=email).first()
 
-    if not user:
-        if User.objects.filter(username=username).exists():
+    if user_by_username:
+        if user_by_username.email != email:
             return Response(
-                {"username": "Это имя уже занято"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"username": "Этот ник уже занят другим email"},
+                status=status.HTTP_400_BAD_REQUEST
             )
-        if User.objects.filter(email=email).exists():
-            return Response(
-                {"email": "Этот email уже занят"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        user = User.objects.create(username=username, email=email)
+        user = user_by_username
+    elif user_by_email:
+        return Response(
+            {"email": "Этот email уже занят другим пользователем"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    else:
+        user = User.objects.create_user(username=username, email=email)
 
-    confirmation_code = generate_confirmation_code()
-    user.confirmation_code = confirmation_code
-    user.save()
+    confirmation_code = default_token_generator.make_token(user)
 
     send_mail(
         "Код подтверждения YaMDb",
         f"Ваш код: {confirmation_code}",
-        settings.DEFAULT_FROM_EMAIL,
+        None,
         [email],
         fail_silently=True,
     )
-    return Response(
-        {"username": username, "email": email}, status=status.HTTP_200_OK
-    )
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def get_jwt_token(request):
-    """Получение JWT токена. Использование Guard Clauses."""
+    """Получение JWT токена."""
     username = request.data.get("username")
     confirmation_code = request.data.get("confirmation_code")
 
@@ -79,7 +71,7 @@ def get_jwt_token(request):
 
     user = get_object_or_404(User, username=username)
 
-    if confirmation_code != user.confirmation_code:
+    if not default_token_generator.check_token(user, confirmation_code):
         return Response(
             {"confirmation_code": "Неверный код"},
             status=status.HTTP_400_BAD_REQUEST,
@@ -92,7 +84,7 @@ def get_jwt_token(request):
 class UserViewSet(viewsets.ModelViewSet):
     """Управление пользователями."""
 
-    queryset = User.objects.all().order_by("username")
+    queryset = User.objects.all()
     serializer_class = CustomUserSerializer
     permission_classes = (IsAdmin,)
     lookup_field = "username"
@@ -115,7 +107,6 @@ class UserViewSet(viewsets.ModelViewSet):
             request.user, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
-        # Ревью: используем метод модели is_admin вместо прямой строки
         serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -128,11 +119,9 @@ class CreateListDestroyViewSet(
 ):
     """Базовый вьюсет для Категорий и Жанров."""
 
-    pass
-
 
 class CategoryViewSet(CreateListDestroyViewSet):
-    queryset = Category.objects.all().order_by("name")
+    queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
@@ -141,7 +130,7 @@ class CategoryViewSet(CreateListDestroyViewSet):
 
 
 class GenreViewSet(CreateListDestroyViewSet):
-    queryset = Genre.objects.all().order_by("name")
+    queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
@@ -150,7 +139,7 @@ class GenreViewSet(CreateListDestroyViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """Произведения. Оптимизированный QuerySet."""
+    """Произведения."""
 
     queryset = (
         Title.objects.annotate(rating=Avg("reviews__score"))
@@ -170,7 +159,7 @@ class TitleViewSet(viewsets.ModelViewSet):
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    """Отзывы. Оптимизация через select_related."""
+    """Отзывы."""
 
     serializer_class = ReviewSerializer
     permission_classes = (IsAuthorOrModeratorOrAdmin,)
@@ -178,7 +167,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
-        return title.reviews.select_related("author").all()
+        return title.reviews.select_related("author")
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get("title_id"))
@@ -186,7 +175,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    """Комментарии. Оптимизация через select_related."""
+    """Комментарии."""
 
     serializer_class = CommentSerializer
     permission_classes = (IsAuthorOrModeratorOrAdmin,)
@@ -198,7 +187,7 @@ class CommentViewSet(viewsets.ModelViewSet):
             pk=self.kwargs.get("review_id"),
             title_id=self.kwargs.get("title_id"),
         )
-        return review.comments.select_related("author").all()
+        return review.comments.select_related("author")
 
     def perform_create(self, serializer):
         review = get_object_or_404(
