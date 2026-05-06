@@ -10,147 +10,223 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reviews', '0004_alter_user_options_alter_user_username'),
+        ("reviews", "0004_alter_user_options_alter_user_username"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='category',
-            options={'verbose_name': 'Категория', 'verbose_name_plural': 'Категории'},
+            name="category",
+            options={
+                "verbose_name": "Категория",
+                "verbose_name_plural": "Категории",
+            },
         ),
         migrations.AlterModelOptions(
-            name='comment',
-            options={'verbose_name': 'Комментарий', 'verbose_name_plural': 'Комментарии'},
+            name="comment",
+            options={
+                "verbose_name": "Комментарий",
+                "verbose_name_plural": "Комментарии",
+            },
         ),
         migrations.AlterModelOptions(
-            name='genre',
-            options={'verbose_name': 'Жанр', 'verbose_name_plural': 'Жанры'},
+            name="genre",
+            options={"verbose_name": "Жанр", "verbose_name_plural": "Жанры"},
         ),
         migrations.AlterModelOptions(
-            name='review',
-            options={'verbose_name': 'Отзыв', 'verbose_name_plural': 'Отзывы'},
+            name="review",
+            options={"verbose_name": "Отзыв", "verbose_name_plural": "Отзывы"},
         ),
         migrations.AlterModelOptions(
-            name='title',
-            options={'verbose_name': 'Произведение', 'verbose_name_plural': 'Произведения'},
+            name="title",
+            options={
+                "verbose_name": "Произведение",
+                "verbose_name_plural": "Произведения",
+            },
         ),
         migrations.AlterModelOptions(
-            name='user',
-            options={'ordering': ['username'], 'verbose_name': 'Пользователь', 'verbose_name_plural': 'Пользователи'},
+            name="user",
+            options={
+                "ordering": ["username"],
+                "verbose_name": "Пользователь",
+                "verbose_name_plural": "Пользователи",
+            },
         ),
         migrations.AlterField(
-            model_name='category',
-            name='name',
-            field=models.CharField(max_length=256, verbose_name='Название'),
+            model_name="category",
+            name="name",
+            field=models.CharField(max_length=256, verbose_name="Название"),
         ),
         migrations.AlterField(
-            model_name='category',
-            name='slug',
-            field=models.SlugField(unique=True, verbose_name='Слаг'),
+            model_name="category",
+            name="slug",
+            field=models.SlugField(unique=True, verbose_name="Слаг"),
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='author',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to=settings.AUTH_USER_MODEL, verbose_name='Автор'),
+            model_name="comment",
+            name="author",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="comments",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Автор",
+            ),
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='pub_date',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации'),
+            model_name="comment",
+            name="pub_date",
+            field=models.DateTimeField(
+                auto_now_add=True, verbose_name="Дата публикации"
+            ),
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='review',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='reviews.review', verbose_name='Отзыв'),
+            model_name="comment",
+            name="review",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="comments",
+                to="reviews.review",
+                verbose_name="Отзыв",
+            ),
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='text',
-            field=models.TextField(verbose_name='Текст комментария'),
+            model_name="comment",
+            name="text",
+            field=models.TextField(verbose_name="Текст комментария"),
         ),
         migrations.AlterField(
-            model_name='genre',
-            name='name',
-            field=models.CharField(max_length=256, verbose_name='Название'),
+            model_name="genre",
+            name="name",
+            field=models.CharField(max_length=256, verbose_name="Название"),
         ),
         migrations.AlterField(
-            model_name='genre',
-            name='slug',
-            field=models.SlugField(unique=True, verbose_name='Слаг'),
+            model_name="genre",
+            name="slug",
+            field=models.SlugField(unique=True, verbose_name="Слаг"),
         ),
         migrations.AlterField(
-            model_name='review',
-            name='author',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to=settings.AUTH_USER_MODEL, verbose_name='Автор'),
+            model_name="review",
+            name="author",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="reviews",
+                to=settings.AUTH_USER_MODEL,
+                verbose_name="Автор",
+            ),
         ),
         migrations.AlterField(
-            model_name='review',
-            name='pub_date',
-            field=models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации'),
+            model_name="review",
+            name="pub_date",
+            field=models.DateTimeField(
+                auto_now_add=True, verbose_name="Дата публикации"
+            ),
         ),
         migrations.AlterField(
-            model_name='review',
-            name='score',
-            field=models.PositiveSmallIntegerField(validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(10)], verbose_name='Оценка'),
+            model_name="review",
+            name="score",
+            field=models.PositiveSmallIntegerField(
+                validators=[
+                    django.core.validators.MinValueValidator(1),
+                    django.core.validators.MaxValueValidator(10),
+                ],
+                verbose_name="Оценка",
+            ),
         ),
         migrations.AlterField(
-            model_name='review',
-            name='text',
-            field=models.TextField(verbose_name='Текст отзыва'),
+            model_name="review",
+            name="text",
+            field=models.TextField(verbose_name="Текст отзыва"),
         ),
         migrations.AlterField(
-            model_name='review',
-            name='title',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='reviews.title', verbose_name='Произведение'),
+            model_name="review",
+            name="title",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="reviews",
+                to="reviews.title",
+                verbose_name="Произведение",
+            ),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='category',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='titles', to='reviews.category', verbose_name='Категория'),
+            model_name="title",
+            name="category",
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="titles",
+                to="reviews.category",
+                verbose_name="Категория",
+            ),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='description',
-            field=models.TextField(blank=True, verbose_name='Описание'),
+            model_name="title",
+            name="description",
+            field=models.TextField(blank=True, verbose_name="Описание"),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='genre',
-            field=models.ManyToManyField(related_name='titles', to='reviews.genre', verbose_name='Жанры'),
+            model_name="title",
+            name="genre",
+            field=models.ManyToManyField(
+                related_name="titles", to="reviews.genre", verbose_name="Жанры"
+            ),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='name',
-            field=models.CharField(max_length=256, verbose_name='Название'),
+            model_name="title",
+            name="name",
+            field=models.CharField(max_length=256, verbose_name="Название"),
         ),
         migrations.AlterField(
-            model_name='title',
-            name='year',
-            field=models.PositiveSmallIntegerField(verbose_name='Год выпуска'),
+            model_name="title",
+            name="year",
+            field=models.PositiveSmallIntegerField(verbose_name="Год выпуска"),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='bio',
-            field=models.TextField(blank=True, null=True, verbose_name='Биография'),
+            model_name="user",
+            name="bio",
+            field=models.TextField(
+                blank=True, null=True, verbose_name="Биография"
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='confirmation_code',
-            field=models.CharField(blank=True, max_length=6, null=True, verbose_name='Код подтверждения'),
+            model_name="user",
+            name="confirmation_code",
+            field=models.CharField(
+                blank=True,
+                max_length=6,
+                null=True,
+                verbose_name="Код подтверждения",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='email',
-            field=models.EmailField(max_length=254, unique=True, verbose_name='Электронная почта'),
+            model_name="user",
+            name="email",
+            field=models.EmailField(
+                max_length=254, unique=True, verbose_name="Электронная почта"
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='role',
-            field=models.CharField(choices=[('user', 'Пользователь'), ('moderator', 'Модератор'), ('admin', 'Администратор')], default='user', max_length=20, verbose_name='Роль'),
+            model_name="user",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("user", "Пользователь"),
+                    ("moderator", "Модератор"),
+                    ("admin", "Администратор"),
+                ],
+                default="user",
+                max_length=20,
+                verbose_name="Роль",
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='username',
-            field=models.CharField(max_length=150, unique=True, validators=[django.contrib.auth.validators.UnicodeUsernameValidator()], verbose_name='Имя пользователя'),
+            model_name="user",
+            name="username",
+            field=models.CharField(
+                max_length=150,
+                unique=True,
+                validators=[
+                    django.contrib.auth.validators.UnicodeUsernameValidator()
+                ],
+                verbose_name="Имя пользователя",
+            ),
         ),
     ]

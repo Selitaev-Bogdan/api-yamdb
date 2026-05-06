@@ -7,12 +7,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('reviews', '0003_user_bio_alter_category_id_alter_comment_id_and_more'), ]
+        (
+            "reviews",
+            "0003_user_bio_alter_category_id_alter_comment_id_and_more",
+        ),
+    ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='user', options={
-                'ordering': ['username']}, ), migrations.AlterField(
-            model_name='user', name='username', field=models.CharField(
-                max_length=150, unique=True, validators=[
-                    django.contrib.auth.validators.UnicodeUsernameValidator()]), ), ]
+            name="user",
+            options={"ordering": ["username"]},
+        ),
+        migrations.AlterField(
+            model_name="user",
+            name="username",
+            field=models.CharField(
+                max_length=150,
+                unique=True,
+                validators=[
+                    django.contrib.auth.validators.UnicodeUsernameValidator()
+                ],
+            ),
+        ),
+    ]
