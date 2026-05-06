@@ -19,7 +19,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 
 class CustomUserCreateSerializer(serializers.Serializer):
-    """Сериализатор для регистрации (строго по ТЗ)."""
+    """Сериализатор для регистрации. Только необходимые поля."""
 
     email = serializers.EmailField(required=True, max_length=254)
     username = serializers.CharField(
@@ -45,6 +45,8 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleListSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка произведений (с аннотированным рейтингом)."""
+
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
     rating = serializers.IntegerField(read_only=True)
@@ -63,6 +65,8 @@ class TitleListSerializer(serializers.ModelSerializer):
 
 
 class TitleCreateSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания произведений."""
+
     category = serializers.SlugRelatedField(
         slug_field="slug", queryset=Category.objects.all()
     )
@@ -89,16 +93,11 @@ class ReviewSerializer(serializers.ModelSerializer):
         if request.method != "POST":
             return data
 
-        if request.user.is_anonymous:
-            return data
-
         title_id = self.context["view"].kwargs.get("title_id")
         if Review.objects.filter(
             title_id=title_id, author=request.user
         ).exists():
-            raise serializers.ValidationError(
-                "Вы уже оставили отзыв на это произведение."
-            )
+            raise serializers.ValidationError("Вы уже оставили отзыв.")
         return data
 
 
